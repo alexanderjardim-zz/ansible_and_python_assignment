@@ -1,9 +1,9 @@
 ---
 
-- include: ubuntu.yml
+- include_tasks: ubuntu.yml
   when: ansible_os_family == 'Debian'
 
-- include: centos.yml
+- include_tasks: centos.yml
   when: ansible_os_family == 'RedHat'
 
 - name: 'Ensures python dependencies are installed'

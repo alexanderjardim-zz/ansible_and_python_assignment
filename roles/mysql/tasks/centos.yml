@@ -1,2 +1,7 @@
 ---
-    
+
+- name: 'Redhat | Ensures yum repo is installed'
+  yum:
+    name: 'http://dev.mysql.com/get/mysql57-community-release-el7-8.noarch.rpm'
+    state: present
+  become: true
