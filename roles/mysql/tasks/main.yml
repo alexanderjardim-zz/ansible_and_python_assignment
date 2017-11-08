@@ -1,0 +1,32 @@
+---
+
+- include: ubuntu.yml
+  when: ansible_os_family == 'Debian'
+
+- include: centos.yml
+  when: ansible_os_family == 'RedHat'
+
+- name: 'Ensures python dependencies are installed'
+  pip:
+    name: "{{ item }}"
+    state: 'latest'
+  with_items:
+    - MySQL-python
+  become: true
+
+- name: 'Ensures mysql service is running'
+  service:
+    name: 'mysql'
+    state: 'restarted'
+  become: true
+
+- name: 'Ensures databases are created'
+  mysql_db:
+    login_host: 'localhost'
+    login_port: 3306
+    login_user: 'root'
+    login_password: "{{ root_password }}"
+    name: "{{ item.name }}"
+    state: present
+  with_items:
+    - "{{ mysql_databases }}"

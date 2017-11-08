@@ -1,0 +1,25 @@
+---
+
+- name: 'ubuntu | Ensures MySQL password is setup'
+  debconf:
+    name: 'mysql-server'
+    question: "{{ item }}"
+    value: '{{ root_password | quote }}'
+    vtype: 'password'
+  become: true
+  with_items:
+    - 'mysql-server/root_password'
+    - 'mysql-server/root_password_again'
+
+- name: 'ubuntu | Ensures operating system dependencies are installed'
+  package:
+    update_cache: true
+    cache_valid_time: 3600
+    name: "{{ item }}"
+    state: latest
+  become: true
+  with_items:
+    - 'libmysqlclient-dev'
+    - "mysql-client-core-{{ version }}"
+    - "mysql-client-{{ version }}"
+    - "mysql-server-{{ version }}"
