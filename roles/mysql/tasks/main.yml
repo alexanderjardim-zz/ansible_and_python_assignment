@@ -1,24 +1,10 @@
 ---
 
-- include_tasks: ubuntu.yml
+- include_tasks: debian.yml
   when: ansible_os_family == 'Debian'
 
-- include_tasks: centos.yml
+- include_tasks: redhat.yml
   when: ansible_os_family == 'RedHat'
-
-- name: 'Ensures python dependencies are installed'
-  pip:
-    name: "{{ item }}"
-    state: 'latest'
-  with_items:
-    - MySQL-python
-  become: true
-
-- name: 'Ensures mysql service is running'
-  service:
-    name: 'mysql'
-    state: 'restarted'
-  become: true
 
 - name: 'Ensures databases are created'
   mysql_db:

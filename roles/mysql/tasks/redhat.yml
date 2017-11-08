@@ -1,0 +1,70 @@
+---
+
+- name: 'Redhat | Ensures yum repo is installed'
+  yum:
+    name: 'http://dev.mysql.com/get/mysql57-community-release-el7-8.noarch.rpm'
+    state: present
+  become: true
+
+- debug:
+    msg: "version is {{ version }}"
+
+- name: 'RedHat | Ensures mysql version 5.6 is installed'
+  yum:
+    name: 'mysql-community-server'
+    disablerepo: 'mysql57-community'
+    enablerepo: 'mysql56-community'
+  when: version == '5.6'
+  become: true
+
+- name: 'RedHat | Ensures mysql version 5.5 is installed'
+  yum:
+    name: 'mysql-community-server'
+    disablerepo: 'mysql57-community'
+    enablerepo: 'mysql55-community'
+  when: version == '5.5'
+  become: true
+
+- name: 'RedHat | Ensures mysql version 5.7 is installed'
+  yum:
+    name: 'mysql-community-server'
+  when: version == '5.7'
+  become: true
+
+- name: 'Redhat | Ensures operating systems dependencies are installed'
+  yum:
+    pkg: "{{ item }}"
+    state: latest
+  become: true
+  with_items:
+    - 'mysql-community-devel'
+
+- name: 'Ensures mysql service is running'
+  service:
+    name: 'mysql'
+    state: 'restarted'
+  become: true
+  when: version == '5.6'
+
+- name: 'Ensures mysqld service is running'
+  service:
+    name: 'mysqld'
+    state: 'restarted'
+  become: true
+  when: version != '5.6'
+
+- name: 'Redhat | Ensures root temporary password is known'
+  shell:
+    cat /var/log/mysqld.log | grep "A temporary password is generated for" | awk
+  register: temp_password
+  when: ansible_os_family == 'RedHat'
+
+- name: 'Redhat | Ensures root password is set'
+  mysql_user:
+    password: "{{ root_password }}"
+    login_user: 'root'
+    login_password: "{{ temp_password }}"
+    user: 'root'
+    state: present
+    check_implicit_admin: true
+  when: ansible_os_family == 'RedHat'

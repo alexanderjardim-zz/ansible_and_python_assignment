@@ -3,7 +3,7 @@
   roles:
     - {
       role: mysql,
-      version: 5.5,
+      version: '5.5',
       root_password: 'wp',
       mysql_databases: [{ name: 'db1'}, { name: 'db2'}]
     }

@@ -23,3 +23,17 @@
     - "mysql-client-core-{{ version }}"
     - "mysql-client-{{ version }}"
     - "mysql-server-{{ version }}"
+
+- name: 'Ensures python dependencies are installed'
+  pip:
+    name: "{{ item }}"
+    state: 'latest'
+  with_items:
+    - MySQL-python
+  become: true
+
+- name: 'Ensures mysql service is running'
+  service:
+    name: 'mysql'
+    state: 'restarted'
+  become: true
