@@ -5,3 +5,11 @@
     name: 'http://dev.mysql.com/get/mysql57-community-release-el7-8.noarch.rpm'
     state: present
   become: true
+
+- name: 'Redhat | Ensures operating systems dependencies are installed'
+  yum:
+    pkg: "{{ item }}"
+    state: latest
+  become: true
+  with_items:
+    - 'mysql-community-devel'
