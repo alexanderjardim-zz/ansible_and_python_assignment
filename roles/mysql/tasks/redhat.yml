@@ -39,6 +39,14 @@
   with_items:
     - 'mysql-community-devel'
 
+- name: 'Ensures python dependencies are installed'
+  pip:
+    name: "{{ item }}"
+    state: 'latest'
+  with_items:
+    - MySQL-python
+  become: true
+
 - name: 'Ensures mysql service is running'
   service:
     name: 'mysql'
@@ -54,17 +62,11 @@
   when: version != '5.6'
 
 - name: 'Redhat | Ensures root temporary password is known'
-  shell:
-    cat /var/log/mysqld.log | grep "A temporary password is generated for" | awk
-  register: temp_password
-  when: ansible_os_family == 'RedHat'
+  command: bash -c 'cat /var/log/mysqld.log |grep "A temporary password is generated for" /var/log/mysqld.log'
+  register: temp_password_line
+
+- debug:
+    msg: "temp password is {{ temp_password_line.stdout_lines[0].split(': ')[1] }}"
 
 - name: 'Redhat | Ensures root password is set'
-  mysql_user:
-    password: "{{ root_password }}"
-    login_user: 'root'
-    login_password: "{{ temp_password }}"
-    user: 'root'
-    state: present
-    check_implicit_admin: true
-  when: ansible_os_family == 'RedHat'
+  command: "mysql --connect-expired-password -u root -p\"{{ temp_password_line.stdout_lines[0].split(': ')[1] }}\" --execute=\"SET PASSWORD FOR 'root'@'localhost' = PASSWORD('{{ root_password }}');\""
