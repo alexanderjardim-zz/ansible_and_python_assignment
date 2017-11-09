@@ -4,6 +4,6 @@
     - {
       role: mysql,
       version: '5.5',
-      root_password: 'wp',
+      root_password: "!Th1515MyP455w0rd",
       mysql_databases: [{ name: 'db1'}, { name: 'db2'}]
     }
