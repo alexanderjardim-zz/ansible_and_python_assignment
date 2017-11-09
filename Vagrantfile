@@ -13,9 +13,6 @@ Vagrant.configure("2") do |config|
       ansible.verbose = "vvvv"
       ansible.install_mode = "pip"
       ansible.version = "2.4.1.0"
-      ansible.extra_vars = {
-        docker_package: 'docker.io'
-      }
     end
   end
 
@@ -27,9 +24,6 @@ Vagrant.configure("2") do |config|
       ansible.verbose = "vvvv"
       ansible.install_mode = "pip"
       ansible.version = "2.4.1.0"
-      ansible.extra_vars = {
-        docker_package: 'docker'
-      }
     end
   end
 
