@@ -61,8 +61,8 @@ class Service(db.Model):
     private_networking = db.Column(db.String)
     volumes = db.Column(db.String)
 
-    #user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    #user = db.relationship('User', backref=db.backref('services', lazy=True))
+    owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    owner = db.relationship('User', backref=db.backref('services', lazy=True))
 
     tags=db.relationship('Tag', secondary=service_tag, backref='services' )
 

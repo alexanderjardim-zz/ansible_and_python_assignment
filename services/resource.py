@@ -10,6 +10,12 @@ role_fields = {
     'name': fields.String
 }
 
+user_fields = {
+    'login': fields.String,
+    'id': fields.String,
+    'role': fields.Nested(role_fields)
+}
+
 service_fields = {
     'id': fields.String,
     'name': fields.String,
@@ -21,14 +27,10 @@ service_fields = {
     'ipv6': fields.Boolean,
     'user_data': fields.String,
     'private_networking': fields.String,
-    'volumes': fields.String
+    'volumes': fields.String,
+    'owner': fields.Nested(user_fields)
 }
 
-user_fields = {
-    'login': fields.String,
-    'id': fields.String,
-    'role': fields.Nested(role_fields)
-}
 
 class RoleResource(Resource):
 
@@ -60,6 +62,9 @@ class ServiceResource(Resource):
 
     def __init__(self):
         self.parser = reqparse.RequestParser()
+        self.parser.add_argument('owner_login', type=str)
+        self.parser.add_argument('owner_id', type=str)
+        self.parser.add_argument('search', type=str)
         self.parser.add_argument('name', type=str)
         self.parser.add_argument('region', type=str)
         self.parser.add_argument('size', type=str)
@@ -74,6 +79,10 @@ class ServiceResource(Resource):
         super(ServiceResource, self).__init__()
 
     def get(self, service_id=None):
+        args = self.parser.parse_args()
+        if args['search'] is not None:
+            services = Service.query.filter_by(name=args['search']).all()
+            return { 'services': [marshal(s, service_fields) for s in services] }
         if service_id is None :
             services = Service.query.all()
             return { 'services': [marshal(s, service_fields) for s in services] }
@@ -86,6 +95,7 @@ class ServiceResource(Resource):
         if s is not None:
             abort(400, message="Service already exists")
         else:
+            u = User.query.filter_by(login=args['owner_login']).first()
             s = Service(name=args['name'],
                         region=args['region'],
                         size=args['size'],
@@ -95,7 +105,8 @@ class ServiceResource(Resource):
                         ipv6=args['ipv6'],
                         user_data=args['user_data'],
                         private_networking=args['private_networking'],
-                        volumes=args['volumes'])
+                        volumes=args['volumes'],
+                        owner=u)
             s.insert()
             return {'service': marshal(s, service_fields)}, 201
 
@@ -108,9 +119,15 @@ class ServiceResource(Resource):
     def put(self, service_id):
         args = self.parser.parse_args()
         s = Service().query.get_or_404(service_id)
-
-
-
+        if args['owner_id'] is not None:
+            u = User.query.get(args['owner_id'])
+            s.owner=u
+        elif args['owner_login'] is not None:
+            u = User.query.filter_by(login=args['owner_login']).first()
+            s.owner=u
+        else:
+            return 'You are not updating anything', 400
+        return {'service': marshal(s, service_fields)}, 201
 
 class UserResource(Resource):
 
