@@ -17,11 +17,5 @@ curl -o /dev/null -H 'Content-type: application/json' -w "%{http_code}\n" -XPUT 
 echo "Search for services that match site*"
 curl -o /dev/null -w "%{http_code}\n" "$SERV_HOST/service/?search=site"
 
-echo "Delete service site1.com"
-curl -o /dev/null -H 'Content-type: application/json' -w "%{http_code}\n" -XDELETE $SERV_HOST/service/1
-
-echo "Delete user Bob"
-curl -o /dev/null -H 'Content-type: application/json' -w "%{http_code}\n" -XDELETE $SERV_HOST/user/3
-
-echo "Delete user Lola"
-curl -o /dev/null -H 'Content-type: application/json' -w "%{http_code}\n" -XDELETE $SERV_HOST/user/4
+#echo "Delete service site1.com"
+#curl -o /dev/null -H 'Content-type: application/json' -w "%{http_code}\n" -XDELETE $SERV_HOST/service/1

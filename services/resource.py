@@ -127,6 +127,7 @@ class ServiceResource(Resource):
             s.owner=u
         else:
             return 'You are not updating anything', 400
+        s.insert()
         return {'service': marshal(s, service_fields)}, 201
 
 class UserResource(Resource):
