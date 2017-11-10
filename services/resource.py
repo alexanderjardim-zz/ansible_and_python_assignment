@@ -1,5 +1,6 @@
 from flask_restful import reqparse, abort, Resource, fields, marshal
 from model import User, Role, Service, Tag
+from auth import is_admin, is_bot, is_user
 
 parser = reqparse.RequestParser()
 parser.add_argument('user')
@@ -31,15 +32,32 @@ service_fields = {
     'owner': fields.Nested(user_fields)
 }
 
+def only_admins_authorized(token):
+    print token
+    if not is_admin(token):
+        abort(401, message="Only admins can make this operation")
+
+def bots_are_not_authorized(token):
+    print token
+    if is_bot(token) or token is None:
+        abort(401, message="Go away, you Bot!")
+
+def common_users_not_authorized(token):
+    if is_user(token):
+        abort(401, message="Only admins or bots are authorized")
+
 
 class RoleResource(Resource):
 
     def __init__(self):
         self.parser = reqparse.RequestParser()
+        self.parser.add_argument('Authorization', type=str, location='headers')
         self.parser.add_argument('name', type=str )
         super(RoleResource, self).__init__()
 
     def get(self, role_id=None):
+        args = self.parser.parse_args()
+        bots_are_not_authorized(args['Authorization'])
         if role_id is None :
             roles = Role.query.all()
             return { 'roles': [marshal(r, role_fields) for r in roles] }
@@ -48,6 +66,7 @@ class RoleResource(Resource):
 
     def post(self):
         args = self.parser.parse_args()
+        only_admins_authorized(args['Authorization'])
         r = Role.query.filter_by(name=args['name']).first()
         if r is not None:
             abort(400, message="Role already exists")
@@ -62,6 +81,7 @@ class ServiceResource(Resource):
 
     def __init__(self):
         self.parser = reqparse.RequestParser()
+        self.parser.add_argument('Authorization', type=str, location='headers')
         self.parser.add_argument('owner_login', type=str)
         self.parser.add_argument('owner_id', type=str)
         self.parser.add_argument('search', type=str)
@@ -80,6 +100,7 @@ class ServiceResource(Resource):
 
     def get(self, service_id=None):
         args = self.parser.parse_args()
+        bots_are_not_authorized(args['Authorization'])
         if args['search'] is not None:
             services = Service.query.filter_by(name=args['search']).all()
             return { 'services': [marshal(s, service_fields) for s in services] }
@@ -91,11 +112,15 @@ class ServiceResource(Resource):
 
     def post(self):
         args = self.parser.parse_args()
+        bots_are_not_authorized(args['Authorization'])
         s = Service().query.filter_by(name=args['name']).first()
         if s is not None:
             abort(400, message="Service already exists")
         else:
-            u = User.query.filter_by(login=args['owner_login']).first()
+            if is_user(args['Authorization']):
+                u = User.query.filter_by(token=args['Authorization']).first()
+            else:
+                u = User.query.filter_by(login=args['owner_login']).first()
             s = Service(name=args['name'],
                         region=args['region'],
                         size=args['size'],
@@ -111,6 +136,8 @@ class ServiceResource(Resource):
             return {'service': marshal(s, service_fields)}, 201
 
     def delete(self, service_id):
+        args = self.parser.parse_args()
+        common_users_not_authorized(args['Authorization'])
         s = Service().query.get_or_404(service_id)
         if s is not None:
             s.remove()
@@ -118,6 +145,7 @@ class ServiceResource(Resource):
 
     def put(self, service_id):
         args = self.parser.parse_args()
+        only_admins_authorized(args['Authorization'])
         s = Service().query.get_or_404(service_id)
         if args['owner_id'] is not None:
             u = User.query.get(args['owner_id'])
@@ -135,14 +163,19 @@ class UserResource(Resource):
     def __init__(self):
         self.parser = reqparse.RequestParser()
         self.parser.add_argument('login', type=str )
+        self.parser.add_argument('Authorization', type=str, location='headers')
         super(UserResource, self).__init__()
 
     def delete(self, user_id):
+        args = self.parser.parse_args()
+        only_admins_authorized(args['Authorization'])
         u = User.query.get_or_404(user_id)
         u.remove()
         return '', 204
 
     def get(self, user_id=None):
+        args = self.parser.parse_args()
+        bots_are_not_authorized(args['Authorization'])
         if user_id is None :
             users = User.query.all()
             return { 'users': [marshal(u, user_fields) for u in users] }
@@ -151,6 +184,7 @@ class UserResource(Resource):
 
     def post(self):
         args = self.parser.parse_args()
+        only_admins_authorized(args['Authorization'])
         u = User.query.filter_by(login=args['login']).first()
         if u is not None:
             abort(400, message="User already exists")

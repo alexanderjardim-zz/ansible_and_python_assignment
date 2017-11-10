@@ -118,5 +118,6 @@ def init_db():
     users = []
     users.append(get_user("admin@123.com", "admin"))
     users.append(get_user("bot@123.com", "automation"))
+    users.append(get_user("john@doe.com", "user"))
     db.session.add_all(users)
     db.session.commit()
